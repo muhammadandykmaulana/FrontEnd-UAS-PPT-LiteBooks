@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presentasi LiteBooks - UAS Front-End</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            /* LiteBooks Identity: Indigo & Slate */
+            --bg-dark: #0f172a;        /* Slate 900 */
+            --bg-card: #1e293b;        /* Slate 800 */
+            --primary: #6366f1;        /* Indigo 500 */
+            --primary-hover: #4f46e5;  /* Indigo 600 */
+            --accent: #10b981;         /* Emerald 500 */
+            --text-main: #f8fafc;      /* Slate 50 */
+            --text-muted: #94a3b8;     /* Slate 400 */
+            --glass: rgba(30, 41, 59, 0.7);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.1) 0%, transparent 40%);
+        }
+
+        /* --- UI Components --- */
+        .fullscreen-btn {
+            position: absolute; top: 20px; right: 20px; z-index: 1000;
+            background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border);
+            color: var(--text-muted); padding: 8px 12px; border-radius: 8px;
+            cursor: pointer; transition: 0.3s; font-size: 0.85rem; display: flex; align-items: center; gap: 8px;
+        }
+        .fullscreen-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .progress-bar { position: absolute; bottom: 0; left: 0; height: 4px; background: linear-gradient(90deg, var(--primary), var(--accent)); width: 0%; transition: width 0.5s ease; z-index: 100; }
+
+        /* --- Mobile Warning Overlay --- */
+        .mobile-warning {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-dark); z-index: 9999;
+            flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; padding: 30px;
+        }
+        .mobile-warning i { font-size: 3rem; color: var(--primary); margin-bottom: 20px; animation: rotatePhone 2s infinite; }
+        
+        @keyframes rotatePhone {
+            0% { transform: rotate(0deg); } 25% { transform: rotate(-90deg); } 50% { transform: rotate(-90deg); } 75% { transform: rotate(0deg); } 100% { transform: rotate(0deg); }
+        }
+
+        @media screen and (max-width: 768px) and (orientation: portrait) {
+            .mobile-warning { display: flex; }
+            .slide-container, .fullscreen-btn, .nav-controls { display: none !important; }
+        }
+
+        /* --- Slide Logic --- */
+        .slide-container {
+            flex: 1; position: relative; width: 100%; height: 100%;
+            perspective: 1000px;
+        }
+
+        .slide {
+            position: absolute; inset: 0;
+            opacity: 0; transform: scale(0.95) translateY(30px); filter: blur(10px);
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            padding: 40px 80px; pointer-events: none;
+        }
+
+        .slide.active {
+            opacity: 1; transform: scale(1) translateY(0); filter: blur(0);
+            z-index: 10; pointer-events: all;
+        }
+
+        /* --- Typography --- */
+        h1 { 
+            font-size: 3.5rem; font-weight: 800; letter-spacing: -2px; margin-bottom: 20px; text-align: center;
+            background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        
+        h2 { 
+            font-size: 2.2rem; margin-bottom: 40px; color: var(--text-main); position: relative; 
+            display: inline-block; padding-bottom: 10px;
+        }
+        h2::after {
+            content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 80px; height: 4px; 
+            background: var(--primary); border-radius: 2px;
+        }
+
+        p { font-size: 1.1rem; color: var(--text-muted); line-height: 1.6; max-width: 800px; text-align: center; }
+
+        .tag {
+            background: rgba(99, 102, 241, 0.1); color: #818cf8; 
+            padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; font-weight: 600;
+            border: 1px solid rgba(99, 102, 241, 0.2); margin-bottom: 20px; display: inline-block;
+        }
+
+        /* --- Tech Stack Grid --- */
+        .tech-grid {
+            display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; width: 100%; max-width: 1100px;
+        }
+        .tech-card {
+            background: var(--glass); border: 1px solid var(--border);
+            padding: 25px 15px; border-radius: 16px; text-align: center;
+            transition: 0.3s; backdrop-filter: blur(10px); display: flex; flex-direction: column; align-items: center; gap: 10px;
+        }
+        .tech-card:hover { transform: translateY(-5px); border-color: var(--primary); box-shadow: 0 10px 30px rgba(99, 102, 241, 0.15); }
+        .tech-icon { font-size: 2rem; color: var(--primary); }
+        .tech-name { font-weight: 700; font-size: 1rem; }
+        .tech-desc { font-size: 0.75rem; color: var(--text-muted); }
+
+        /* --- Challenge/Struggle Cards --- */
+        .struggle-container {
+            display: flex; gap: 30px; width: 100%; max-width: 1100px; margin-top: 30px;
+        }
+        .struggle-card {
+            flex: 1; background: var(--bg-card); border: 1px solid var(--border);
+            padding: 25px; border-radius: 12px; text-align: left; position: relative; overflow: hidden;
+        }
+        .struggle-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+        }
+        .struggle-card.red::before { background: #ef4444; }
+        .struggle-card.yellow::before { background: #eab308; }
+        .struggle-card.green::before { background: #10b981; }
+
+        .s-title { font-weight: 700; font-size: 1.1rem; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+        .s-desc { font-size: 0.9rem; color: var(--text-muted); }
+        .s-solution { margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--text-main); }
+        .s-solution strong { color: var(--primary); }
+
+        /* --- Button --- */
+        .cta-btn {
+            background: var(--primary); color: white; padding: 15px 40px; border-radius: 12px;
+            text-decoration: none; font-weight: 700; font-size: 1.1rem; border: none;
+            cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            display: inline-flex; align-items: center; gap: 10px;
+        }
+        .cta-btn:hover { background: var(--primary-hover); transform: scale(1.05); }
+        .cta-outline {
+            background: transparent; border: 2px solid var(--border); color: var(--text-main);
+        }
+        .cta-outline:hover { border-color: var(--text-main); background: rgba(255,255,255,0.05); transform: scale(1.05); }
+
+        /* --- Controls --- */
+        .nav-controls {
+            position: absolute; bottom: 40px; right: 40px; display: flex; gap: 15px; z-index: 100;
+        }
+        .nav-btn {
+            width: 50px; height: 50px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.05); color: white; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; transition: 0.3s;
+            backdrop-filter: blur(5px);
+        }
+        .nav-btn:hover { background: var(--primary); transform: scale(1.1); border-color: var(--primary); }
+
+        .feature-list {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 40px; width: 100%; max-width: 900px; text-align: left;
+        }
+        .feature-item h3 { color: var(--primary); font-size: 1.3rem; margin-bottom: 10px; }
+        .feature-item ul { list-style: none; }
+        .feature-item li { margin-bottom: 10px; color: var(--text-muted); display: flex; align-items: center; gap: 10px; }
+        .feature-item li i { color: var(--accent); font-size: 0.8rem; }
+
+        /* Mermaid Adjustment */
+        .mermaid {
+            background: rgba(30, 41, 59, 0.5);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* --- Folder Structure & Test Case Styling --- */
+        .folder-structure {
+            font-family: 'JetBrains Mono', monospace;
+            background: #0f172a;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            color: #94a3b8;
+            font-size: 0.85rem;
+            max-width: 450px;
+            text-align: left;
+            overflow-y: auto;
+            max-height: 400px;
+        }
+        .folder-structure .highlight { color: var(--accent); }
+        .folder-structure .file { color: var(--primary); }
+
+        .test-table-container {
+            width: 100%;
+            max-width: 900px;
+            overflow-x: auto;
+        }
+        .test-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+        .test-table th {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+            padding: 12px;
+            border-bottom: 2px solid var(--border);
+        }
+        .test-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-muted);
+        }
+        .status-pass {
+            color: var(--accent);
+            font-weight: 700;
+            background: rgba(16, 185, 129, 0.1);
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+    </style>
+    <!-- Import Mermaid JS -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'dark', securityLevel: 'loose' });
+    </script>
+</head>
+<body>
+
+    <!-- Mobile Warning -->
+    <div class="mobile-warning">
+        <i class="fa-solid fa-rotate"></i>
+        <h2>Mohon Putar Layar</h2>
+        <p>Gunakan mode Landscape untuk pengalaman presentasi terbaik.</p>
+    </div>
+
+    <button class="fullscreen-btn" id="fsBtn" onclick="toggleFullScreen()">
+        <i class="fa-solid fa-expand"></i> Full Screen
+    </button>
+
+    <div class="progress-bar" id="progressBar"></div>
+
+    <div class="slide-container">
+
+        <!-- SLIDE 1: Cover -->
+        <div class="slide active">
+            <div class="tag"><i class="fa-solid fa-graduation-cap"></i> UAS Pemrograman Front-End</div>
+            <h1>LiteBooks</h1>
+            <p style="font-size: 1.5rem; color: var(--text-main); margin-bottom: 10px;">Platform Manajemen Dokumentasi Teknis Modern</p>
+            <p style="font-size: 1rem; opacity: 0.7;">Muhammad Andyk Maulana - 1002240004</p>
+            <div style="margin-top: 40px; display: flex; gap: 20px;">
+                <button class="cta-btn" onclick="nextSlide()">Mulai Presentasi <i class="fa-solid fa-arrow-right"></i></button>
+            </div>
+        </div>
+
+        <!-- SLIDE 2: Latar Belakang -->
+        <div class="slide">
+            <h2>Latar Belakang</h2>
+            <div style="display: flex; gap: 40px; max-width: 900px; align-items: center;">
+                <div style="flex: 1; font-size: 5rem; color: #ef4444; text-align: center;">
+                    <i class="fa-solid fa-file-circle-question"></i>
+                </div>
+                <div style="flex: 2; text-align: left;">
+                    <h3 style="margin-bottom: 20px; font-size: 1.5rem;">Masalah: Dokumentasi Tercecer</h3>
+                    <p style="text-align: left; margin-bottom: 15px;">
+                        Materi kuliah, snippet kode, dan tutorial teknis sering tersebar di Notepad, WhatsApp, atau Google Docs. Format teks biasa tidak mendukung <em>Syntax Highlighting</em> untuk kode program.
+                    </p>
+                    <div style="background: rgba(16, 185, 129, 0.1); padding: 20px; border-radius: 12px; border-left: 4px solid var(--accent);">
+                        <strong style="color: var(--accent);">Solusi LiteBooks:</strong><br>
+                        Aplikasi perpustakaan digital terpusat yang mendukung format <strong>Markdown</strong>, database persisten, dan akses yang aman.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 3: Tech Stack (Optimal Requirement) -->
+        <div class="slide">
+            <h2>Tech Stack Modern</h2>
+            <p style="margin-bottom: 40px;">Migrasi total dari Native JS ke Ekosistem React</p>
+            <div class="tech-grid">
+                <div class="tech-card">
+                    <i class="fa-brands fa-react tech-icon" style="color: #61DAFB;"></i>
+                    <div class="tech-name">React JS (Vite)</div>
+                    <div class="tech-desc">Component-Based UI & SPA Logic v18</div>
+                </div>
+                <div class="tech-card">
+                    <i class="fa-solid fa-wind tech-icon" style="color: #38BDF8;"></i>
+                    <div class="tech-name">Tailwind CSS</div>
+                    <div class="tech-desc">Utility-First Responsive Styling v3.4</div>
+                </div>
+                <div class="tech-card">
+                    <i class="fa-solid fa-database tech-icon" style="color: #3ECF8E;"></i>
+                    <div class="tech-name">Supabase</div>
+                    <div class="tech-desc">PostgreSQL DB & Auth Service</div>
+                </div>
+                <div class="tech-card">
+                    <i class="fa-brands fa-markdown tech-icon" style="color: #ffffff;"></i>
+                    <div class="tech-name">Markdown</div>
+                    <div class="tech-desc">react-markdown & remark-gfm</div>
+                </div>
+                <div class="tech-card">
+                    <i class="fa-solid fa-icons tech-icon" style="color: #F05742;"></i>
+                    <div class="tech-name">Lucide React</div>
+                    <div class="tech-desc">Consistent Iconography</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 4: Struktur Folder & Use Case -->
+        <div class="slide">
+            <h2>Arsitektur & Use Case</h2>
+            <div style="display: flex; gap: 40px; width: 100%; max-width: 1000px; justify-content: center;">
+                
+                <!-- Folder Structure -->
+                <div class="folder-structure">
+                    LiteBooks/<br>
+                    ├── node_modules/<br>
+                    ├── public/<br>
+                    ├── <span class="highlight">src/</span><br>
+                    │   ├── assets/ <span class="file"># Images & Fonts</span><br>
+                    │   ├── components/ <span class="file"># UI Components</span><br>
+                    │   ├── <span class="highlight">App.jsx</span> <span class="file"># Main Controller</span><br>
+                    │   ├── main.jsx <span class="file"># Entry Point</span><br>
+                    │   └── index.css <span class="file"># Global Styles</span><br>
+                    ├── .env <span class="file"># Secrets</span><br>
+                    ├── index.html<br>
+                    ├── package.json<br>
+                    ├── postcss.config.js<br>
+                    ├── tailwind.config.js<br>
+                    └── vite.config.js
+                </div>
+
+                <!-- Use Cases -->
+                <div class="feature-list" style="grid-template-columns: 1fr; gap: 20px;">
+                    <div class="feature-item" style="background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border);">
+                        <h3><i class="fa-solid fa-user"></i> Guest Mode</h3>
+                        <ul>
+                            <li><i class="fa-solid fa-check"></i> <strong>Katalog Publik:</strong> Melihat materi.</li>
+                            <li><i class="fa-solid fa-check"></i> <strong>Smart Search:</strong> Filter judul/kategori.</li>
+                            <li><i class="fa-solid fa-check"></i> <strong>Reader Mode:</strong> Baca Markdown.</li>
+                        </ul>
+                    </div>
+                    <div class="feature-item" style="background: rgba(99, 102, 241, 0.1); padding: 20px; border-radius: 12px; border: 1px solid rgba(99, 102, 241, 0.3);">
+                        <h3><i class="fa-solid fa-user-shield"></i> Admin Mode</h3>
+                        <ul>
+                            <li><i class="fa-solid fa-check"></i> <strong>Secure Auth:</strong> Login Supabase.</li>
+                            <li><i class="fa-solid fa-check"></i> <strong>CRUD Lengkap:</strong> Kelola materi.</li>
+                            <li><i class="fa-solid fa-check"></i> <strong>Visibilitas:</strong> Toggle Hidden/Public.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 5: Alur Kerja Sistem (Mermaid Diagram) -->
+        <div class="slide">
+            <h2>Alur Kerja Sistem (User Flow)</h2>
+            <p style="margin-bottom: 30px;">Visualisasi alur interaksi Guest dan Admin</p>
+            
+            <div class="mermaid">
+flowchart TD
+    subgraph Guest [Guest / Pengunjung]
+        direction TB
+        G_Start((Mulai)) --> G_View[Melihat Katalog Public]
+        G_View --> G_Search[Cari Materi]
+        G_Search --> G_Read[Baca Mode Reader]
+        style G_View fill:#1e293b,stroke:#6366f1,stroke-width:2px
+        style G_Search fill:#1e293b,stroke:#6366f1,stroke-width:2px
+        style G_Read fill:#1e293b,stroke:#6366f1,stroke-width:2px
+    end
+
+    subgraph Admin [Admin / Pemilik]
+        direction TB
+        A_Start((Mulai)) --> A_Login[Login Email/Password]
+        A_Login --> A_Dash[Dashboard Admin]
+        A_Dash --> A_Add[Tambah Materi Baru]
+        A_Dash --> A_Edit[Edit / Hapus Materi]
+        A_Dash --> A_Vis[Ubah Visibilitas]
+        style A_Login fill:#312e81,stroke:#818cf8,stroke-width:2px
+        style A_Dash fill:#312e81,stroke:#818cf8,stroke-width:2px
+        style A_Add fill:#312e81,stroke:#818cf8,stroke-width:2px
+        style A_Edit fill:#312e81,stroke:#818cf8,stroke-width:2px
+        style A_Vis fill:#312e81,stroke:#818cf8,stroke-width:2px
+    end
+            </div>
+        </div>
+
+        <!-- SLIDE 6: Tantangan & Solusi (The Struggle) -->
+        <div class="slide">
+            <h2>Refleksi & Tantangan Teknis</h2>
+            <p>Pembelajaran utama selama proses pengembangan</p>
+            
+            <div class="struggle-container">
+                <div class="struggle-card red">
+                    <div class="s-title"><i class="fa-brands fa-markdown"></i> Markdown Rendering</div>
+                    <div class="s-desc">Teks video & tabel awalnya tidak muncul, hanya teks biasa.</div>
+                    <div class="s-solution"><strong>Solusi:</strong> Mengimplementasikan plugin <code>remark-gfm</code> dan <code>rehype-raw</code> untuk parsing HTML kompleks.</div>
+                </div>
+
+                <div class="struggle-card yellow">
+                    <div class="s-title"><i class="fa-solid fa-key"></i> Env Variables</div>
+                    <div class="s-desc">Koneksi DB gagal di lokal karena ENV tersimpan di GitHub Secrets.</div>
+                    <div class="s-solution"><strong>Solusi:</strong> Konfigurasi manual <code>.env.local</code> dan penanganan error handling yang baik.</div>
+                </div>
+
+                <div class="struggle-card green">
+                    <div class="s-title"><i class="fa-solid fa-seedling"></i> Empty State</div>
+                    <div class="s-desc">Tampilan aplikasi terlihat "rusak" saat database kosong (awal clone).</div>
+                    <div class="s-solution"><strong>Fitur Unik:</strong> Membuat logika <code>Auto-Seeding</code> yang otomatis mengisi DB jika data 0.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 7: Test Case Report - BARU -->
+        <div class="slide">
+            <h2>Laporan Pengujian (Black Box Testing)</h2>
+            <p style="margin-bottom: 30px;">Hasil pengujian fungsionalitas utama aplikasi</p>
+            
+            <div class="test-table-container">
+                <table class="test-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Deskripsi Pengujian</th>
+                            <th>Hasil Diharapkan</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>TC-01</td>
+                            <td>Login Admin (Valid Creds)</td>
+                            <td>Masuk dashboard, tombol "Materi Baru" muncul</td>
+                            <td><span class="status-pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td>TC-02</td>
+                            <td>CRUD - Create Materi</td>
+                            <td>Data tersimpan di DB & muncul di katalog</td>
+                            <td><span class="status-pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td>TC-03</td>
+                            <td>CRUD - Read (Markdown)</td>
+                            <td>Format Heading & Code ter-render visual</td>
+                            <td><span class="status-pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td>TC-04</td>
+                            <td>CRUD - Delete</td>
+                            <td>Konfirmasi alert muncul, data hilang</td>
+                            <td><span class="status-pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td>TC-05</td>
+                            <td>Responsivitas (Mobile)</td>
+                            <td>Grid berubah 1 kolom, Navigasi rapi</td>
+                            <td><span class="status-pass">PASS</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- SLIDE 8: Demo Link -->
+        <div class="slide">
+            <div style="font-size: 4rem; margin-bottom: 20px; color: var(--primary);">
+                <i class="fa-solid fa-laptop-code"></i>
+            </div>
+            <h1>Live Demo</h1>
+            <p>Silakan akses aplikasi secara langsung untuk mencoba fitur CRUD dan Responsivitas.</p>
+            
+            <div style="margin-top: 40px; display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
+                <a href="https://github.com/muhammadandykmaulana/LiteBooks" target="_blank" class="cta-btn cta-outline">
+                    <i class="fa-brands fa-github"></i> Repository
+                </a>
+                <!-- Ganti # dengan link deploy vercel/netlify jika ada -->
+                <a href="#" onclick="alert('Pastikan link deploy sudah dimasukkan di href tombol ini!')" target="_blank" class="cta-btn">
+                    <i class="fa-solid fa-rocket"></i> Buka Aplikasi
+                </a>
+            </div>
+        </div>
+
+        <!-- SLIDE 9: Penutup -->
+        <div class="slide">
+            <h1>Terima Kasih</h1>
+            <p>IF220 - Pemrograman Front-End</p>
+            <div style="margin-top: 30px; font-family: 'JetBrains Mono', monospace; color: var(--accent);">
+                &lt;Code is Poetry /&gt;
+            </div>
+            <button class="fullscreen-btn" onclick="location.reload()" style="position: relative; top: 0; right: 0; margin-top: 40px;">
+                <i class="fa-solid fa-rotate-right"></i> Ulangi
+            </button>
+        </div>
+
+    </div>
+
+    <!-- Nav Controls -->
+    <div class="nav-controls">
+        <button class="nav-btn" onclick="prevSlide()"><i class="fa-solid fa-chevron-left"></i></button>
+        <button class="nav-btn" onclick="nextSlide()"><i class="fa-solid fa-chevron-right"></i></button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const progressBar = document.getElementById('progressBar');
+        const fsBtn = document.getElementById('fsBtn');
+
+        function updateSlide() {
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active');
+                if (index === currentSlide) slide.classList.add('active');
+            });
+            const progress = ((currentSlide + 1) / slides.length) * 100;
+            progressBar.style.width = `${progress}%`;
+        }
+
+        function nextSlide() { if (currentSlide < slides.length - 1) { currentSlide++; updateSlide(); } }
+        function prevSlide() { if (currentSlide > 0) { currentSlide--; updateSlide(); } }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+            if (e.key === 'ArrowLeft') prevSlide();
+        });
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        }
+
+        document.addEventListener('fullscreenchange', () => {
+            if (document.fullscreenElement) {
+                fsBtn.innerHTML = '<i class="fa-solid fa-compress"></i> Exit Full Screen';
+            } else {
+                fsBtn.innerHTML = '<i class="fa-solid fa-expand"></i> Full Screen';
+            }
+        });
+
+        updateSlide();
+    </script>
+</body>
+</html>
